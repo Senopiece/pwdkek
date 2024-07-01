@@ -67,7 +67,7 @@ tiers = ["Pathetic", "Low", "Medium", "High", "Extreme"]
 
 def tier(ttd: timedelta):
     for i, tier in enumerate(tiers[:-1]):
-        threshold = timedelta(days=pow(356, i))
+        threshold = timedelta(days=365*pow(10, i))
 
         if ttd < threshold:
             return tier
