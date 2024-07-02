@@ -16,11 +16,12 @@ def count_prefixed(prefix: str):
 def probability(given_prefix: str, expecting_next_char: str):
     total = count_prefixed(given_prefix)
     matched = count_prefixed(given_prefix + expecting_next_char)
+    if total == 0:
+        return 0
     return matched / total
 
 
 def calc_entropy(password: str):
-    password += "\n"
     prefix = ""
     entropy = 0
 
@@ -32,7 +33,7 @@ def calc_entropy(password: str):
                 if prefix == "":
                     chosen_token_prob = 0.000000001  # A Legendary tier for sure
                     break
-                prefix = ""
+                prefix = prefix[1:]
             else:
                 break
 
