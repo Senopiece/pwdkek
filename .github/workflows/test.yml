@@ -1,0 +1,22 @@
+name: CI/CD workflow
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Извлечение репозитория
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Установка Python c кэшированим зависимостей для pip
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
