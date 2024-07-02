@@ -29,7 +29,8 @@ def test_passwords(filename):
 
     print("\nResults:")
     for tier_name, correct_count in correct_predictions.items():
-        print(f"Correct predictions for {tier_name} tier: {correct_count / len(password_data[tier_name])}")
+        if tier_name in password_data:
+            print(f"Correct predictions for {tier_name} tier: {correct_count / len(password_data[tier_name])}")
 
 if __name__ == "__main__":
     test_passwords('test_passwords.json')
