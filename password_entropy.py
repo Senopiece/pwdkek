@@ -7,16 +7,16 @@ import torch.nn.functional as F
 NUM_GENERATIONS = 1
 MIN_CHARS = 6
 MAX_CHARS = 10
+TIERS = ["Pathetic", "Low", "Medium", "High", "Extreme"]
 
 def tier(ttd: timedelta):
-    tiers = ["Pathetic", "Low", "Medium", "High", "Extreme"]
-    for i, tier in enumerate(tiers[:-1]):
+    for i, tier in enumerate(TIERS[:-1]):
         threshold = timedelta(days=365*pow(10, i))
 
         if ttd < threshold:
             return tier
 
-    return tiers[-1]
+    return TIERS[-1]
 
 def calculate_password_entropy(predefined_password):
     assert len(predefined_password) >= MIN_CHARS, "Too short password"
