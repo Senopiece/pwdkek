@@ -71,4 +71,4 @@ try:
     )
     print("Tier:", tier(ttd))
 except OverflowError:
-    print("Legendary Tier")
+    print("Tier: Ultra Extreme")
