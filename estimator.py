@@ -20,7 +20,6 @@ class PasswordComplexityTiers(Enum):
     MEDIUM = "Medium"  # a year
     HIGH = "High"  # 10 years
     EXTREME = "Extreme"  # 100+ years
-    ULTRA_EXTREME = "UltraExtreme"  # uncountable number of years
 
 
 @dataclass
@@ -79,16 +78,13 @@ class PasswordComplexityEstimator:
     def _tier(cls, ttd: timedelta):
         COMPLEXITIES = list(PasswordComplexityTiers)
 
-        if ttd == timedelta.max:
-            return COMPLEXITIES[-1]
-
-        for i, tier in enumerate(COMPLEXITIES[:-2]):
+        for i, tier in enumerate(COMPLEXITIES[:-1]):
             threshold = timedelta(days=365 * pow(10, i - 2))
 
             if ttd < threshold:
                 return tier
 
-        return COMPLEXITIES[-2]
+        return COMPLEXITIES[-1]
 
     def estimate(self, password: str):
         entropy = self._entropy(password)
@@ -123,15 +119,19 @@ def main():
 
             print("Password entropy:", estimate.entropy)
 
-            ttd = estimate.ttd
-            years = ttd.days // 365
-            days = ttd.days % 365
-            hours, remainder = divmod(ttd.seconds, 3600)
-            minutes, seconds = divmod(remainder, 60)
-            print(
-                "Time to decode with 1Gh/s:",
-                f"{years} years {days} days {hours} hours {minutes} minutes {seconds} seconds",
-            )
+            print("Time to decode with 1Gh/s: ", end="")
+            if estimate.ttd == timedelta.max:
+                print("Uncountable number of years")
+            else:
+                ttd = estimate.ttd
+                years = ttd.days // 365
+                days = ttd.days % 365
+                hours, remainder = divmod(ttd.seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                print(
+                    f"{years} years {days} days {hours} hours {minutes} minutes {seconds} seconds",
+                )
+
             print("Tier:", estimate.tier.value)
 
     except KeyboardInterrupt:

@@ -23,15 +23,36 @@ enum class PasswordComplexityTiers {
     ULTRA_EXTREME
 };
 
+using uint_seconds = std::chrono::duration<uint64_t>;
+
+
+std::ostream& operator<<(std::ostream& os, const PasswordComplexityTiers& tier) {
+    switch (tier) {
+        case PasswordComplexityTiers::PATHETIC: return os << "Pathetic";
+        case PasswordComplexityTiers::LOW: return os << "Low";
+        case PasswordComplexityTiers::MEDIUM: return os << "Medium";
+        case PasswordComplexityTiers::HIGH: return os << "High";
+        case PasswordComplexityTiers::EXTREME: return os << "Extreme";
+        case PasswordComplexityTiers::ULTRA_EXTREME: return os << "Ultra Extreme";
+        default: return os << "Unknown Tier";
+    }
+}
+
 struct PasswordComplexityEstimate {
     double entropy;
-    std::chrono::duration<double> ttd;
+    uint_seconds ttd;
     PasswordComplexityTiers tier;
 };
 
 class PasswordComplexityEstimator {
 public:
     PasswordComplexityEstimator(const std::string& dataset_path = "datasets/rockyou-utf8-sorted.txt.gz") {
+        std::ifstream test_file(dataset_path, std::ios::binary);
+        if (!test_file) {
+            throw std::runtime_error("Failed to open dataset file: " + dataset_path);
+        }
+        test_file.close();
+        
         igzstream file(dataset_path.c_str());
         std::string line;
         while (std::getline(file, line)) {
@@ -42,11 +63,11 @@ public:
     PasswordComplexityEstimate estimate(const std::string& password) {
         double entropy = calculateEntropy(password);
 
-        std::chrono::duration<double> ttd = std::chrono::duration<double>::max();
+        uint_seconds ttd = uint_seconds::max();
         try {
             ttd = calculateTTD(entropy);
         } catch (const std::overflow_error&) {
-            // Handle overflow
+            // TTD max if overflow
         }
 
         PasswordComplexityTiers tier = determineTier(ttd);
@@ -103,45 +124,60 @@ private:
         return entropy;
     }
 
-    std::chrono::duration<double> calculateTTD(double entropy) {
-        return std::chrono::duration<double>(10e-9 * std::pow(2, entropy));
-    }
+    uint_seconds calculateTTD(double entropy) const {
+        uint64_t result = 1;
+        const uint64_t base = 2;
+        double integralPart;
+        double fractionalPart = modf(entropy, &integralPart);
 
-    PasswordComplexityTiers determineTier(const std::chrono::duration<double>& ttd) {
-        static const std::vector<PasswordComplexityTiers> COMPLEXITIES = {
-            PasswordComplexityTiers::PATHETIC, 
-            PasswordComplexityTiers::LOW, 
-            PasswordComplexityTiers::MEDIUM, 
-            PasswordComplexityTiers::HIGH, 
-            PasswordComplexityTiers::EXTREME, 
-            PasswordComplexityTiers::ULTRA_EXTREME
-        };
-
-        if (ttd == std::chrono::duration<double>::max()) {
-            return COMPLEXITIES.back();
+        // Calculate 2^integralPart safely
+        for (int i = 0; i < integralPart; i++) {
+            if (result > (std::numeric_limits<uint64_t>::max() / base)) {
+                throw std::overflow_error("Overflow in calculating TTD");
+            }
+            result *= base;
         }
 
-        for (size_t i = 0; i < COMPLEXITIES.size() - 2; ++i) {
-            auto threshold = std::chrono::duration<double>(365 * std::pow(10, i - 2) * 24 * 60 * 60);
+        // Adjust for fractional part using exp2 (safe since result < max_uint64)
+        result = static_cast<uint64_t>(result * std::exp2(fractionalPart));
+
+        // Now divide by 10^9 to convert to seconds (assuming result is in nanoseconds)
+        return uint_seconds(result / 100000000);
+    }
+
+    static PasswordComplexityTiers determineTier(const uint_seconds& ttd) {
+        const uint64_t seconds_per_day = 86400;
+
+        const std::vector<PasswordComplexityTiers> COMPLEXITIES = {
+            PasswordComplexityTiers::PATHETIC,
+            PasswordComplexityTiers::LOW,
+            PasswordComplexityTiers::MEDIUM,
+            PasswordComplexityTiers::HIGH,
+            PasswordComplexityTiers::EXTREME
+        };
+
+        for (int i = 0; i < COMPLEXITIES.size() - 1; ++i) {
+            uint64_t threshold_days = 365 * std::pow(10, i - 2);
+            uint_seconds threshold = uint_seconds(threshold_days * seconds_per_day);
+
             if (ttd < threshold) {
                 return COMPLEXITIES[i];
             }
         }
 
-        return COMPLEXITIES[COMPLEXITIES.size() - 2];
+        return COMPLEXITIES.back();
     }
 };
 
 int main() {
-    std::cout << "Loading..." << std::endl;
-    PasswordComplexityEstimator estimator;
-
     try {
+        std::cout << "Loading..." << std::endl;
+        PasswordComplexityEstimator estimator;
+
         while (true) {
             std::cout << "\nEnter a password: ";
             std::string input;
             std::getline(std::cin, input);
-            if (input.empty()) break;
 
             try {
                 PasswordComplexityEstimate estimate = estimator.estimate(input);
@@ -149,30 +185,34 @@ int main() {
                 std::cout << "Password entropy: " << estimate.entropy << std::endl;
 
                 auto ttd = estimate.ttd;
+                std::cout << "Time to decode with 1Gh/s: ";
+                if (ttd == uint_seconds::max()) {
+                    std::cout << "Uncountable number of years";
+                } else {
+                    using days = std::chrono::duration<uint64_t, std::ratio<86400>>;
+                    auto days_count = std::chrono::duration_cast<days>(ttd).count();
+                    int years = days_count / 365;
+                    days_count %= 365;
+                    auto hours = std::chrono::duration_cast<std::chrono::hours>(ttd).count() % 24;
+                    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(ttd).count() % 60;
+                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(ttd).count() % 60;
 
-                // Define days as 24 hours
-                using days = std::chrono::duration<int, std::ratio<86400>>;
-                
-                auto days_count = std::chrono::duration_cast<days>(ttd).count();
-                int years = days_count / 365;
-                days_count %= 365;
-                auto hours = std::chrono::duration_cast<std::chrono::hours>(ttd).count() % 24;
-                auto minutes = std::chrono::duration_cast<std::chrono::minutes>(ttd).count() % 60;
-                auto seconds = std::chrono::duration_cast<std::chrono::seconds>(ttd).count() % 60;
+                    std::cout << years << " years " << days_count << " days " 
+                              << hours << " hours " << minutes << " minutes " << seconds << " seconds";
+                }
+                std::cout << std::endl;
 
-                std::cout << "Time to decode with 1Gh/s: "
-                          << years << " years " << days_count << " days " 
-                          << hours << " hours " << minutes << " minutes " << seconds << " seconds" 
-                          << std::endl;
-                std::cout << "Tier: " << static_cast<int>(estimate.tier) << std::endl;
+                std::cout << "Tier: " << estimate.tier << std::endl;
 
             } catch (const std::invalid_argument& e) {
                 std::cerr << e.what() << std::endl;
                 continue;
             }
         }
-    } catch (const std::exception&) {
-        // Handle any other exceptions
+
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
     }
 
     return 0;
