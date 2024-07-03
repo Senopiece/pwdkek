@@ -14,7 +14,7 @@ def test_passwords(filename):
     estimator = PasswordComplexityEstimator()
 
     # Количество совпадений по тирам
-    correct_predictions = {tier_name : 0 for tier_name in TIERS}
+    correct_predictions = {tier_name.value : 0 for tier_name in PasswordComplexityTiers}
     
     for expected_tier, passwords in password_data.items():
         print(f"Testing {expected_tier} passwords:")
