@@ -20,7 +20,6 @@ enum class PasswordComplexityTiers {
     MEDIUM,
     HIGH,
     EXTREME,
-    ULTRA_EXTREME
 };
 
 using uint_seconds = std::chrono::duration<uint64_t>;
@@ -33,7 +32,6 @@ std::ostream& operator<<(std::ostream& os, const PasswordComplexityTiers& tier) 
         case PasswordComplexityTiers::MEDIUM: return os << "Medium";
         case PasswordComplexityTiers::HIGH: return os << "High";
         case PasswordComplexityTiers::EXTREME: return os << "Extreme";
-        case PasswordComplexityTiers::ULTRA_EXTREME: return os << "Ultra Extreme";
         default: return os << "Unknown Tier";
     }
 }
@@ -46,17 +44,15 @@ struct PasswordComplexityEstimate {
 
 class PasswordComplexityEstimator {
 public:
-    PasswordComplexityEstimator(const std::string& dataset_path = "datasets/rockyou-utf8-sorted.txt.gz") {
-        std::ifstream test_file(dataset_path, std::ios::binary);
-        if (!test_file) {
-            throw std::runtime_error("Failed to open dataset file: " + dataset_path);
-        }
-        test_file.close();
-        
+    PasswordComplexityEstimator(const std::string& dataset_path) {        
         igzstream file(dataset_path.c_str());
         std::string line;
         while (std::getline(file, line)) {
             passwords.push_back(line);
+        }
+
+        if (passwords.size() == 0) {
+            throw std::runtime_error("something is wrong with the dataset, maybe file not found");
         }
     }
 
@@ -169,10 +165,19 @@ private:
     }
 };
 
-int main() {
+int main(int argc, char* argv[]) {
+    std::string datasetPath = "datasets/rockyou-utf8-filtered-sorted.txt.gz"; // Default path
+
+    for (int i = 1; i < argc; i++) { // Start from 1 to skip the program name
+        std::string arg = argv[i];
+        if (arg == "--dataset_path" && i + 1 < argc) {
+            datasetPath = argv[++i]; // Increment i to skip the value
+        }
+    }
+
     try {
         std::cout << "Loading..." << std::endl;
-        PasswordComplexityEstimator estimator;
+        PasswordComplexityEstimator estimator(datasetPath);
 
         while (true) {
             std::cout << "\nEnter a password: ";

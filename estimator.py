@@ -1,3 +1,4 @@
+import argparse
 import bisect
 from dataclasses import dataclass
 from datetime import timedelta
@@ -30,9 +31,17 @@ class PasswordComplexityEstimate:
 
 
 class PasswordComplexityEstimator:
-    def __init__(self, dataset_path: str = "datasets/rockyou-utf8-sorted.txt.gz"):
+    def __init__(
+        self,
+        dataset_path: str,
+    ):
         with gzip.open(dataset_path) as file:
             self._passwords = [line.decode() for line in file.readlines()]
+
+        if len(self._passwords) == 0:
+            raise ValueError(
+                "something is wrong with the dataset, maybe file not found"
+            )
 
     def _count_prefixed(self, prefix: str):
         start = bisect.bisect_left(self._passwords, prefix)
@@ -105,8 +114,21 @@ class PasswordComplexityEstimator:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Password Complexity Estimator")
+    parser.add_argument(
+        "--dataset_path",
+        type=str,
+        help="Path to the dataset file",
+        default="datasets/rockyou-utf8-filtered-sorted.txt.gz",
+    )
+    args = parser.parse_args()
+
     print("Loading...")
-    estimator = PasswordComplexityEstimator()
+    try:
+        estimator = PasswordComplexityEstimator(args.dataset_path)
+    except ValueError as e:
+        print("Error:", e)
+        return
 
     try:
         while True:
