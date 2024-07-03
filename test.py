@@ -28,8 +28,11 @@ def test_passwords(filename):
         
             entropy = estimate.entropy
             predicted_tier = estimate.tier.value
+            ttd = estimate.ttd
+            if ttd == timedelta.max:
+                ttd = "Uncountable number of years"
 
-            print(f"Password: {password}, Predicted Tier: {predicted_tier}, Entropy: {entropy}")
+            print(f"Password: {password}, Predicted Tier: {predicted_tier}, Entropy: {entropy}, TTD: {ttd}")
 
             if expected_tier == predicted_tier:
                 correct_predictions[predicted_tier] += 1
