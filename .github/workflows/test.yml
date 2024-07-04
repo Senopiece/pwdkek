@@ -34,7 +34,7 @@ jobs:
       - uses: actions/cache@v3
         name: Enable cache
         with:
-          path: ./.venv
+          path: ./pwdkek-python/.venv
           key: venv-${{ hashFiles('pwdkek-python/poetry.lock') }}
 
       - name: Install dependencies
