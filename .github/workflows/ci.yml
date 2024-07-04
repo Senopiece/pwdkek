@@ -58,8 +58,10 @@ jobs:
           export PYTHONPATH=$(pwd):$PYTHONPATH
           wget http://download.g0tmi1k.com/wordlists/large/crackstation-human-only.txt.gz
           wget https://github.com/zacheller/rockyou/raw/master/rockyou.txt.tar.gz
-          python pwdkek_python/prepare_dataset.py rockyou.txt.tar.gz ../datasets/rockyou-utf8-filtered-sorted.txt.gz
-          python pwdkek_python/prepare_dataset.py crackstation-human-only.txt.gz ../datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
+          gzip -d crackstation-human-only.txt.gz
+          tar -xvf rockyou.txt.tar.gz
+          python pwdkek_python/prepare_dataset.py rockyou.txt ../datasets/rockyou-utf8-filtered-sorted.txt.gz
+          python pwdkek_python/prepare_dataset.py crackstation-human-only.txt ../datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
 
       - name: Run tests (small dataset)
         run: |
