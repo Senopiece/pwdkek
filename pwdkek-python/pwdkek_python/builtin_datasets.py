@@ -70,5 +70,5 @@ class BuiltInDataset(Enum):
 
 if __name__ == "__main__":
     print("Available datasets:", BuiltInDataset.names())
-    BuiltInDataset.SMALL.value.download()
-    BuiltInDataset.BIG.value.download()
+    assert BuiltInDataset.SMALL.value.path.exists()
+    assert BuiltInDataset.BIG.value.path.exists()
