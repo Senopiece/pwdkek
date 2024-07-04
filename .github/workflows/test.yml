@@ -21,6 +21,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Verify Gzip Archive
+      run: |
+        if ! file datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz | grep gzip > /dev/null; then
+          echo "Error: The file is not a valid gzip archive."
+          exit 1
+
     - name: Run tests
       run: |
         cd datasets
