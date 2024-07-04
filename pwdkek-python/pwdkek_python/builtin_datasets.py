@@ -32,7 +32,9 @@ class BuiltinDatasetInfo(NamedTuple):
         from pwdkek_python.prepare_dataset import prepare_dataset
 
         print("Downloading", self.source_url)
-        file_data = urlopen(Request(self.source_url, headers={"User-Agent": "curl/8.3.0"}))
+        file_data = urlopen(
+            Request(self.source_url, headers={"User-Agent": "curl/8.3.0"})
+        )
         decompressed_file = NamedTemporaryFile(delete=False)
         with decompressed_file as tmp_file:
             with gzip.open(BytesIO(file_data.read()), "rb") as file:
@@ -66,7 +68,7 @@ class BuiltInDataset(Enum):
         ]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Available datasets:", BuiltInDataset.names())
     BuiltInDataset.SMALL.value.download()
     BuiltInDataset.BIG.value.download()
