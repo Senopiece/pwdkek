@@ -1,7 +1,7 @@
-name: Test Python Package
+name: Test & Build Python Package
 on: push
 jobs:
-  test:
+  test-and-build:
     runs-on: ubuntu-latest
 
     steps:
@@ -53,3 +53,102 @@ jobs:
           cd pwdkek-python
           export PYTHONPATH=$(pwd):$PYTHONPATH
           python tests/test.py --dataset_path ../datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
+
+      - name: Build package
+        working-directory: ./pwdkek-python
+        run: poetry build
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package-distributions
+          path: ./pwdkek-python/dist/
+
+  publish-to-testpypi:
+    name: Publish Python distribution to TestPyPI
+    needs:
+      - test-and-build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/pwdkek-python
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: ./pwdkek-python/dist/
+      - name: Publish distribution 📦 to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  publish-to-pypi:
+    name: >-
+      Publish Python 🐍 distribution 📦 to PyPI
+    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    needs:
+      - test-and-build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pwdkek-python
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: ./pwdkek-python/dist/
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: >-
+      Sign the Python 🐍 distribution 📦 with Sigstore
+      and upload them to GitHub Release
+    needs:
+      - publish-to-pypi
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # IMPORTANT: mandatory for making GitHub Releases
+      id-token: write  # IMPORTANT: mandatory for sigstore
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: ./pwdkek-python/dist/
+      - name: Sign the dists with Sigstore
+        uses: sigstore/gh-action-sigstore-python@v2.1.1
+        with:
+          inputs: >-
+            ./pwdkek-python/dist/*.tar.gz
+            ./pwdkek-python/dist/*.whl
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create
+          '${{ github.ref_name }}'
+          --repo '${{ github.repository }}'
+          --notes ""
+      - name: Upload artifact signatures to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # Upload to GitHub Release using the `gh` CLI.
+        # `dist/` contains the built packages, and the
+        # sigstore-produced signatures and certificates.
+        run: >-
+          gh release upload
+          '${{ github.ref_name }}' ./pwdkek-python/dist/**
+          --repo '${{ github.repository }}'
