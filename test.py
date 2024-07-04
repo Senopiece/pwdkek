@@ -11,7 +11,7 @@ def load_passwords(filename):
 # Функция для тестирования паролей
 def test_passwords(filename):
     password_data = load_passwords(filename)
-    estimator = PasswordComplexityEstimator()
+    estimator = PasswordComplexityEstimator("datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz")
 
     # Количество совпадений по тирам
     correct_predictions = {tier_name.value : 0 for tier_name in PasswordComplexityTiers}
@@ -32,11 +32,11 @@ def test_passwords(filename):
             if ttd == timedelta.max:
                 ttd = "Uncountable number of years"
 
-            print(f"Password: {password}, Predicted Tier: {predicted_tier}, Entropy: {entropy}, TTD: {ttd}")
+            print(f"Password: {password}, Predicted Tier: {predicted_tier}, Entropy: {round(entropy, 3)}, TTD: {ttd}")
 
             if expected_tier == predicted_tier:
                 correct_predictions[predicted_tier] += 1
-
+        print('-' * 100)
     print("\nResults:")
     for tier_name, correct_count in correct_predictions.items():
         if tier_name in password_data:
@@ -44,3 +44,4 @@ def test_passwords(filename):
             
 if __name__ == "__main__":
     test_passwords('test_passwords.json')
+    
