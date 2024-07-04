@@ -23,7 +23,7 @@ def test_passwords(filename):
         "--dataset_path",
         type=str,
         help="Path to the dataset file",
-        default="datasets/rockyou-utf8-filtered-sorted.txt.gz",
+        default="../datasets/rockyou-utf8-filtered-sorted.txt.gz",
     )
     args = parser.parse_args()
 
@@ -83,4 +83,4 @@ def test_passwords(filename):
 
 
 if __name__ == "__main__":
-    test_passwords("test_passwords.json")
+    test_passwords("tests/test_files/test_passwords.json")
