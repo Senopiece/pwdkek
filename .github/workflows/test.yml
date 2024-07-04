@@ -27,6 +27,7 @@ jobs:
         uses: abatilo/actions-poetry@v2
 
       - name: Configure poetry
+        working-directory: ./pwdkek-python
         run: |
           poetry config virtualenvs.create true --local
           poetry config virtualenvs.in-project true --local
