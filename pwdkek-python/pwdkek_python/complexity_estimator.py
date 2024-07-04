@@ -5,6 +5,9 @@ from enum import Enum
 import gzip
 from math import log2
 import string
+from pathlib import Path
+
+from pwdkek_python.builtin_datasets import BuiltInDataset
 
 PASSWORD_ALLOWED_CHARS = str(
     string.ascii_lowercase
@@ -32,8 +35,11 @@ class PasswordComplexityEstimate:
 class PasswordComplexityEstimator:
     def __init__(
         self,
-        dataset_path: str,
+        dataset_path: str | Path | BuiltInDataset,
     ):
+        if isinstance(dataset_path, BuiltInDataset):
+            dataset_path = dataset_path.value.path
+
         with gzip.open(dataset_path) as file:
             self._passwords = [line.decode() for line in file.readlines()]
 

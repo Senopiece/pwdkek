@@ -43,7 +43,7 @@ jobs:
           poetry config virtualenvs.in-project true --local
 
       - uses: actions/cache@v3
-        name: Enable cache
+        name: Enable dependencies cache
         with:
           path: ./pwdkek-python/.venv
           key: venv-${{ hashFiles('pwdkek-python/poetry.lock') }}
@@ -52,16 +52,17 @@ jobs:
         working-directory: ./pwdkek-python
         run: poetry install
 
+      - uses: actions/cache@v3
+        name: Enable datasets cache
+        with:
+          path: ./datasets
+          key: datasets-${{ hashFiles('pwdkek-python/pwdkek_python/builtin_datasets.py') }}
+
       - name: Download datasets
         run: |
           cd pwdkek-python
           export PYTHONPATH=$(pwd):$PYTHONPATH
-          wget http://download.g0tmi1k.com/wordlists/large/crackstation-human-only.txt.gz
-          wget https://github.com/zacheller/rockyou/raw/master/rockyou.txt.tar.gz
-          gzip -d crackstation-human-only.txt.gz
-          tar -xvf rockyou.txt.tar.gz
-          python pwdkek_python/prepare_dataset.py rockyou.txt ../datasets/rockyou-utf8-filtered-sorted.txt.gz
-          python pwdkek_python/prepare_dataset.py crackstation-human-only.txt ../datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
+          python pwdkek_python/builtin_datasets.py
 
       - name: Run tests (small dataset)
         run: |
