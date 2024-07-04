@@ -109,6 +109,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          packages-dir: ./pwdkek-python/dist/
 
   publish-to-pypi:
     name: >-
@@ -131,6 +132,8 @@ jobs:
           path: ./pwdkek-python/dist/
       - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ./pwdkek-python/dist/
 
   github-release:
     name: >-
