@@ -68,13 +68,13 @@ jobs:
         run: |
           cd pwdkek-python
           export PYTHONPATH=$(pwd):$PYTHONPATH
-          python tests/test.py --dataset_path ../datasets/rockyou-utf8-filtered-sorted.txt.gz
+          python tests/test.py --dataset small
 
       - name: Run tests (big dataset)
         run: |
           cd pwdkek-python
           export PYTHONPATH=$(pwd):$PYTHONPATH
-          python tests/test.py --dataset_path ../datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
+          python tests/test.py --dataset big
 
       - name: Build package
         working-directory: ./pwdkek-python

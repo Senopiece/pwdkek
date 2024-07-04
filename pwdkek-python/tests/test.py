@@ -1,4 +1,6 @@
 from datetime import timedelta
+
+from pwdkek_python.builtin_datasets import BuiltInDataset
 from pwdkek_python.complexity_estimator import (
     PasswordComplexityTiers,
     PasswordComplexityEstimator,
@@ -20,15 +22,21 @@ def test_passwords(filename):
         description="Password Complexity Estimator Testing"
     )
     parser.add_argument(
-        "--dataset_path",
+        "--dataset",
         type=str,
-        help="Path to the dataset file",
-        default="../datasets/rockyou-utf8-filtered-sorted.txt.gz",
+        help="Built-in dataset name or path to the dataset file",
+        default="small",
     )
     args = parser.parse_args()
 
     password_data = load_passwords(filename)
-    estimator = PasswordComplexityEstimator(args.dataset_path)
+
+    if args.dataset in BuiltInDataset.names():
+        dataset = BuiltInDataset[args.dataset.upper()]
+    else:
+        dataset = args.dataset
+
+    estimator = PasswordComplexityEstimator(dataset)
 
     # Количество совпадений по тирам
     correct_predictions = {tier_name.value: 0 for tier_name in PasswordComplexityTiers}
