@@ -17,8 +17,8 @@ def test_passwords(filename):
     
     # cумма предсказаний для самых плохих паролей
     sum_pathetic_pred = 0
-    tier_to_num = {tier_name.value : i for i, tier_name in enumerate(PasswordComplexityTiers)}
-    pathetic_tier = [tier_name.value for tier_name in PasswordComplexityTiers][0]
+    tier_to_num = {tier_name : i for i, tier_name in enumerate(TIERS)}
+    pathetic_tier = TIERS[0]
     
     for expected_tier, passwords in password_data.items():
         print(f"Testing {expected_tier} passwords:")
