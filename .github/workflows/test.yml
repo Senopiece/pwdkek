@@ -42,11 +42,11 @@ jobs:
         run: poetry install
 
       - name: Run tests (small dataset)
-        working-directory: ./pwdkek-python
         run: |
-          python tests/test.py --dataset_path datasets/rockyou-utf8-filtered-sorted.txt.gz
+          cd pwdkek-python
+          python tests/test.py --dataset_path ../datasets/rockyou-utf8-filtered-sorted.txt.gz
 
       - name: Run tests (big dataset)
-        working-directory: ./pwdkek-python
         run: |
-          poetry tests/test.py --dataset_path datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
+          cd pwdkek-python
+          poetry tests/test.py --dataset_path ../datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
