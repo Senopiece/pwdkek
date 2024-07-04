@@ -25,8 +25,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          lfs: true
 
       # Установка Python c кэшированим зависимостей для pip
       - name: Set up Python
