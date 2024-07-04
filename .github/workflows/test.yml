@@ -25,7 +25,8 @@ jobs:
 
       - name: Install poetry
         uses: abatilo/actions-poetry@v2
-        working-directory: ./pwdkek-python
+
+      - name: Configure poetry
         run: |
           poetry config virtualenvs.create true --local
           poetry config virtualenvs.in-project true --local
