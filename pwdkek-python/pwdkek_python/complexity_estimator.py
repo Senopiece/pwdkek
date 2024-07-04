@@ -1,4 +1,3 @@
-import argparse
 import bisect
 from dataclasses import dataclass
 from datetime import timedelta
@@ -6,6 +5,9 @@ from enum import Enum
 import gzip
 from math import log2
 import string
+from pathlib import Path
+
+from pwdkek_python.builtin_datasets import BuiltInDataset
 
 PASSWORD_ALLOWED_CHARS = str(
     string.ascii_lowercase
@@ -33,8 +35,11 @@ class PasswordComplexityEstimate:
 class PasswordComplexityEstimator:
     def __init__(
         self,
-        dataset_path: str,
+        dataset_path: str | Path | BuiltInDataset,
     ):
+        if isinstance(dataset_path, BuiltInDataset):
+            dataset_path = dataset_path.value.path
+
         with gzip.open(dataset_path) as file:
             self._passwords = [line.decode() for line in file.readlines()]
 
@@ -111,54 +116,3 @@ class PasswordComplexityEstimator:
             ttd,
             tier,
         )
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Password Complexity Estimator")
-    parser.add_argument(
-        "--dataset_path",
-        type=str,
-        help="Path to the dataset file",
-        default="datasets/rockyou-utf8-filtered-sorted.txt.gz",
-    )
-    args = parser.parse_args()
-
-    print("Loading...")
-    try:
-        estimator = PasswordComplexityEstimator(args.dataset_path)
-    except ValueError as e:
-        print("Error:", e)
-        return
-
-    try:
-        while True:
-            print()
-            try:
-                estimate = estimator.estimate(input("Enter a password: "))
-            except ValueError as e:
-                print(e)
-                continue
-
-            print("Password entropy:", estimate.entropy)
-
-            print("Time to decode with 1Gh/s: ", end="")
-            if estimate.ttd == timedelta.max:
-                print("Uncountable number of years")
-            else:
-                ttd = estimate.ttd
-                years = ttd.days // 365
-                days = ttd.days % 365
-                hours, remainder = divmod(ttd.seconds, 3600)
-                minutes, seconds = divmod(remainder, 60)
-                print(
-                    f"{years} years {days} days {hours} hours {minutes} minutes {seconds} seconds",
-                )
-
-            print("Tier:", estimate.tier.value)
-
-    except KeyboardInterrupt:
-        pass
-
-
-if __name__ == "__main__":
-    main()

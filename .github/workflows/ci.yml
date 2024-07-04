@@ -1,0 +1,178 @@
+name: CI/CD Workflow
+on: push
+jobs:
+  ruff-format:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chartboost/ruff-action@v1
+        with:
+          args: format --check
+
+  ruff-check:
+    name: Run linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chartboost/ruff-action@v1
+
+  test-and-build:
+    name: Test & build Python package
+    runs-on: ubuntu-latest
+    needs: [ruff-check, ruff-format]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Установка Python c кэшированим зависимостей для pip
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2
+
+      - name: Configure poetry
+        working-directory: ./pwdkek-python
+        run: |
+          poetry config virtualenvs.create true --local
+          poetry config virtualenvs.in-project true --local
+
+      - uses: actions/cache@v3
+        name: Enable dependencies cache
+        with:
+          path: ./pwdkek-python/.venv
+          key: venv-${{ hashFiles('pwdkek-python/poetry.lock') }}
+
+      - name: Install dependencies
+        working-directory: ./pwdkek-python
+        run: poetry install
+
+      - uses: actions/cache@v3
+        name: Enable datasets cache
+        with:
+          path: ./datasets
+          key: datasets-${{ hashFiles('pwdkek-python/pwdkek_python/builtin_datasets.py') }}
+
+      - name: Download datasets
+        run: |
+          cd pwdkek-python
+          export PYTHONPATH=$(pwd):$PYTHONPATH
+          python pwdkek_python/builtin_datasets.py
+
+      - name: Run tests (small dataset)
+        run: |
+          cd pwdkek-python
+          export PYTHONPATH=$(pwd):$PYTHONPATH
+          python tests/test.py --dataset small
+
+      - name: Run tests (big dataset)
+        run: |
+          cd pwdkek-python
+          export PYTHONPATH=$(pwd):$PYTHONPATH
+          python tests/test.py --dataset big
+
+      - name: Build package
+        working-directory: ./pwdkek-python
+        run: poetry build
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package-distributions
+          path: ./pwdkek-python/dist/
+
+  publish-to-testpypi:
+    name: Publish to TestPyPI
+    needs:
+      - test-and-build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/pwdkek-python
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: ./pwdkek-python/dist/
+      - name: Publish distribution 📦 to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: ./pwdkek-python/dist/
+
+  publish-to-pypi:
+    name: >-
+      Publish to PyPI
+    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    needs:
+      - test-and-build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pwdkek-python
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: ./pwdkek-python/dist/
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ./pwdkek-python/dist/
+
+  github-release:
+    name: >-
+      Sign and upload package to GitHub Release
+    needs:
+      - publish-to-pypi
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # IMPORTANT: mandatory for making GitHub Releases
+      id-token: write  # IMPORTANT: mandatory for sigstore
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: ./pwdkek-python/dist/
+      - name: Sign the dists with Sigstore
+        uses: sigstore/gh-action-sigstore-python@v2.1.1
+        with:
+          inputs: >-
+            ./pwdkek-python/dist/*.tar.gz
+            ./pwdkek-python/dist/*.whl
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create
+          '${{ github.ref_name }}'
+          --repo '${{ github.repository }}'
+          --notes ""
+      - name: Upload artifact signatures to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # Upload to GitHub Release using the `gh` CLI.
+        # `dist/` contains the built packages, and the
+        # sigstore-produced signatures and certificates.
+        run: >-
+          gh release upload
+          '${{ github.ref_name }}' ./pwdkek-python/dist/**
+          --repo '${{ github.repository }}'
