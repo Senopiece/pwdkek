@@ -1,6 +1,7 @@
 from datetime import timedelta
 from estimator import *
 import json
+import argparse
 
 # Функция для загрузки паролей и их тиров из JSON файла
 def load_passwords(filename):
@@ -10,8 +11,17 @@ def load_passwords(filename):
 
 # Функция для тестирования паролей
 def test_passwords(filename):
+    parser = argparse.ArgumentParser(description="Password Complexity Estimator Testing")
+    parser.add_argument(
+        "--dataset_path",
+        type=str,
+        help="Path to the dataset file",
+        default="datasets/rockyou-utf8-filtered-sorted.txt.gz",
+    )
+    args = parser.parse_args()
+
     password_data = load_passwords(filename)
-    estimator = PasswordComplexityEstimator("datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz")
+    estimator = PasswordComplexityEstimator(args.dataset_path)
 
     # Количество совпадений по тирам
     correct_predictions = {tier_name.value : 0 for tier_name in PasswordComplexityTiers}

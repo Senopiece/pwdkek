@@ -21,12 +21,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: File info
+    - name: Run tests (small dataset)
       run: |
-        file datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
+        python test.py --dataset_path datasets/rockyou-utf8-filtered-sorted.txt.gz
 
-    - name: Run tests
+    - name: Run tests (big dataset)
       run: |
-        cd datasets
-        ls
-        python test.py
+        python test.py --dataset_path datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
