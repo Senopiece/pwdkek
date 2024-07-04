@@ -28,12 +28,6 @@ jobs:
         with:
           lfs: true
 
-      - name: Checkout LFS objects
-        run: git lfs checkout
-
-      - name: Pull LFS objects
-        run: git lfs pull
-
       # Установка Python c кэшированим зависимостей для pip
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -59,6 +53,15 @@ jobs:
       - name: Install dependencies
         working-directory: ./pwdkek-python
         run: poetry install
+
+      - name: Download datasets
+        run: |
+          cd pwdkek-python
+          export PYTHONPATH=$(pwd):$PYTHONPATH
+          wget http://download.g0tmi1k.com/wordlists/large/crackstation-human-only.txt.gz
+          wget https://github.com/zacheller/rockyou/raw/master/rockyou.txt.tar.gz
+          python pwdkek_python/prepare_dataset.py rockyou.txt.tar.gz ../datasets/rockyou-utf8-filtered-sorted.txt.gz
+          python pwdkek_python/prepare_dataset.py crackstation-human-only.txt.gz ../datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
 
       - name: Run tests (small dataset)
         run: |
