@@ -51,4 +51,4 @@ jobs:
         run: |
           cd pwdkek-python
           export PYTHONPATH=$(pwd):$PYTHONPATH
-          poetry tests/test.py --dataset_path ../datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
+          python tests/test.py --dataset_path ../datasets/crackstation-human-only-utf8-filtered-sorted.txt.gz
