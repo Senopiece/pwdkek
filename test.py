@@ -15,6 +15,11 @@ def test_passwords(filename):
     # Количество совпадений по тирам
     correct_predictions = {tier_name : 0 for tier_name in TIERS}
     
+    # cумма предсказаний для самых плохих паролей
+    sum_pathetic_pred = 0
+    tier_to_num = {tier_name.value : i for i, tier_name in enumerate(PasswordComplexityTiers)}
+    pathetic_tier = [tier_name.value for tier_name in PasswordComplexityTiers][0]
+    
     for expected_tier, passwords in password_data.items():
         print(f"Testing {expected_tier} passwords:")
         for password in passwords:
@@ -25,12 +30,16 @@ def test_passwords(filename):
             print(f"Password: {password}, Predicted Tier: {predicted_tier}, Entropy: {entropy}")
 
             if expected_tier == predicted_tier:
-                correct_predictions[predicted_tier] += 1
+                correct_predictions[predicted_tier] += 1   
+            if expected_tier == pathetic_tier:
+                sum_pathetic_pred += tier_to_num[predicted_tier]
 
     print("\nResults:")
     for tier_name, correct_count in correct_predictions.items():
         if tier_name in password_data:
             print(f"Correct predictions for {tier_name} tier: {correct_count / len(password_data[tier_name])}")
+    
+    print(f"\nAverage predictions for {pathetic_tier} passwords: {sum_pathetic_pred / len(password_data[pathetic_tier])}. must be {tier_to_num[pathetic_tier]}")
 
 if __name__ == "__main__":
     test_passwords('test_passwords.json')
