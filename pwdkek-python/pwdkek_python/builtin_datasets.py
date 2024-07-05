@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.request import urlopen, Request
 
 
-DATASET_ROOT = Path(__file__).parent.parent.parent / "datasets"
+DATASET_ROOT = Path(__file__).parent.parent / "datasets"
 
 
 class BuiltinDatasetInfo(NamedTuple):
@@ -30,6 +30,8 @@ class BuiltinDatasetInfo(NamedTuple):
 
     def download(self) -> None:
         from pwdkek_python.prepare_dataset import prepare_dataset
+
+        DATASET_ROOT.mkdir(exist_ok=True)
 
         print("Downloading", self.source_url)
         file_data = urlopen(
