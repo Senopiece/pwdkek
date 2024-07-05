@@ -55,7 +55,7 @@ jobs:
       - uses: actions/cache@v3
         name: Enable datasets cache
         with:
-          path: ./datasets
+          path: ./pwdkek-python/datasets
           key: datasets-${{ hashFiles('pwdkek-python/pwdkek_python/builtin_datasets.py') }}
 
       - name: Download datasets
