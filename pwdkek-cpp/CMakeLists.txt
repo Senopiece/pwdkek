@@ -16,7 +16,7 @@ find_package(ZLIB REQUIRED)
 include_directories(${GZSTREAM_INCLUDE_DIR})
 
 # Add the main project executable
-add_executable(PasswordComplexityEstimator estimator.cpp)
+add_executable(PasswordComplexityEstimator example.cpp estimator.cpp)
 
 # Link libraries
 target_link_libraries(PasswordComplexityEstimator ${GZSTREAM_LIBRARY} ZLIB::ZLIB)
